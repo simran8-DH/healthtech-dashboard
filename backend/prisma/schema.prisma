@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  NURSE
+  DOCTOR
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNKNOWN
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  fullName     String      @map("full_name")
+  role         Role
+  isActive     Boolean     @default(true) @map("is_active")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  encounters   Encounter[] @relation("CreatedBy")
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Patient {
+  id             String      @id @default(uuid())
+  /// Anonymized display code (e.g. PT-A7K2) — no PII stored
+  anonymizedCode String      @unique @map("anonymized_code")
+  ageGroup       String      @map("age_group") // e.g. 0-5, 6-17, 18-40, 41-60, 60+
+  gender         Gender      @default(UNKNOWN)
+  villageCode    String?     @map("village_code") // region code only, not address
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  encounters     Encounter[]
+
+  @@map("patients")
+}
+
+model Encounter {
+  id              String   @id @default(uuid())
+  patientId       String   @map("patient_id")
+  createdById     String   @map("created_by_id")
+  encounterDate   DateTime @map("encounter_date")
+  symptoms        String
+  diagnosis       String
+  treatment       String
+  category        String // viral, seasonal, diabetes, hypertension, maternal, other
+  severity        String // mild, moderate, severe
+  followUpNeeded  Boolean  @default(false) @map("follow_up_needed")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("CreatedBy", fields: [createdById], references: [id])
+
+  @@index([encounterDate])
+  @@index([category])
+  @@index([patientId])
+  @@map("encounters")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String // LOGIN, CREATE, UPDATE, DELETE, ACCESS_DENIED, etc.
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  details    String?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId])
+  @@map("audit_logs")
+}

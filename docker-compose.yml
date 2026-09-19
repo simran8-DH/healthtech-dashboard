@@ -1,0 +1,54 @@
+services:
+  # PostgreSQL — persistent clinic data (users, patients, encounters, audit_logs)
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: healthtech
+      POSTGRES_PASSWORD: healthtech
+      POSTGRES_DB: healthtech_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U healthtech -d healthtech_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Express API — JWT auth, RBAC, Prisma ORM, REST CRUD + dashboard metrics
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://healthtech:healthtech@db:5432/healthtech_db?schema=public
+      JWT_SECRET: ${JWT_SECRET:-healthtech-compose-secret-change-me}
+      JWT_EXPIRES_IN: 8h
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      SEED_SAMPLES: "false"
+    expose:
+      - "4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # React SPA (Vite build) served by Nginx; /api proxied to api container
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

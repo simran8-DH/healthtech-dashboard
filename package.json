@@ -1,0 +1,14 @@
+{
+  "name": "healthtech-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HealthTech Patient Data Dashboard — React + Express + PostgreSQL",
+  "scripts": {
+    "db:up": "docker compose up -d db",
+    "dev:api": "npm --prefix backend run dev",
+    "dev:web": "npm --prefix frontend run dev",
+    "test": "npm --prefix backend test",
+    "seed": "npm --prefix backend run prisma:seed",
+    "docker:up": "docker compose up --build"
+  }
+}
