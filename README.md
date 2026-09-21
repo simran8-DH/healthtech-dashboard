@@ -71,19 +71,16 @@ Then `\dt`, `SELECT * FROM patients;`, `\q`.
 
 ---
 
-## Where is it hosted exactly?
+## Where is it hosted?
 
-| What | Where | Notes |
-|------|--------|--------|
-| Source code | **GitHub** `simran8-DH/healthtech-dashboard` | Version control |
-| Frontend UI (public) | **GitHub Pages** | Static React build only — no database inside Pages |
-| Backend + DB (real app) | **Docker on your laptop** | `localhost:8080` runs UI+API+DB together |
-| Temporary public API link | Cloudflare tunnel (only if you start it) | Points at your Docker; dies when PC/tunnel stops |
+| What | Where |
+|------|--------|
+| Code | GitHub |
+| UI (public) | https://simran8-dh.github.io/healthtech-dashboard/ |
+| Full app | Docker → http://localhost:8080 |
 
-**Interview one-liner:**  
-*“UI is on GitHub Pages; API and PostgreSQL run in Docker Compose on my machine. Pages calls the API over HTTPS when a tunnel/API URL is configured.”*
-
-For a permanent public API you’d add Render/Neon later — not required if you demo from Docker.
+Public Pages login needs a Cloudflare tunnel — see [docs/DEPLOY.md](docs/DEPLOY.md).  
+Easiest interview demo: screen-share **http://localhost:8080**.
 
 ---
 
